@@ -377,8 +377,22 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
   footer .sources li { font-size: 0.8rem; }
 }
 
+.dl-section { text-align: center; margin: 3.2rem 0 2.4rem; }
+.dl-btn {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff; padding: 0.95rem 2.4rem; border-radius: 999px;
+  font-weight: 700; font-size: 1.05rem; text-decoration: none;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.dl-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(37, 99, 235, 0.45); }
+.dl-btn .dl-ico { margin-right: 0.5rem; font-weight: 900; }
+.dl-note { color: var(--muted); font-size: 0.85rem; margin-top: 0.7rem; }
+
 @media print {
   body::before { display: none; }
+  .dl-section { display: none; }
   .code .copy-ico { display: none; }
   #toast { display: none; }
   .table-wrap { max-height: none; overflow: visible; }
@@ -536,6 +550,11 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
   <div class="callout">
     <strong>说明：</strong>① 灰色删除线为已过期码（含立秋到寒蝉鸣，2026-08-13 过期），仅作存档参考；② 活动 / 节日码在活动结束后失效，兑换失败属正常现象；③ 社区 / 直播专属码如兑换失败可能与渠道或活动批次有关；④ 第三方攻略站的乱码字符串渠道批次仍未纳入本表。
   </div>
+</section>
+
+<section class="dl-section">
+  <a class="dl-btn" href="sgbh-codes.pdf" download="三国冰河时代兑换码大全.pdf"><span class="dl-ico">↓</span>下载 PDF 文档</a>
+  <p class="dl-note">82 个兑换码完整版 · 微信可直接打开 · 更新于 2026-08-28</p>
 </section>
 
 <footer>
