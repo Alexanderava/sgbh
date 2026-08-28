@@ -377,6 +377,64 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
   footer .sources li { font-size: 0.8rem; }
 }
 
+/* 评论区 · 液态玻璃 */
+.comments { margin: 3.2rem 0 2.4rem; }
+.c-title { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1rem; }
+.c-title h2 { font-size: 1.35rem; }
+.c-count { color: var(--muted); font-size: 0.85rem; }
+.glass {
+  background: rgba(255, 255, 255, 0.45);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 22px;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.10);
+}
+.c-composer { padding: 1.1rem 1.2rem; margin-bottom: 1.3rem; }
+.c-row { display: flex; gap: 0.8rem; align-items: center; margin-bottom: 0.8rem; }
+.c-avatar {
+  width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex: none;
+  border: 2px solid rgba(255, 255, 255, 0.85); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+}
+.c-nick {
+  flex: 1; min-width: 0; border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.55); border-radius: 999px;
+  padding: 0.55rem 1rem; font-size: 0.92rem; outline: none; font-family: inherit;
+}
+.c-nick:focus, .c-text:focus { border-color: var(--accent); background: rgba(255, 255, 255, 0.75); }
+.c-text {
+  width: 100%; min-height: 88px; resize: vertical;
+  border: 1px solid rgba(255, 255, 255, 0.7); background: rgba(255, 255, 255, 0.55);
+  border-radius: 16px; padding: 0.8rem 1rem; font-size: 0.95rem; outline: none; font-family: inherit;
+}
+.c-foot { display: flex; justify-content: space-between; align-items: center; gap: 0.8rem; margin-top: 0.7rem; }
+.c-hint { color: var(--muted); font-size: 0.78rem; }
+.c-submit {
+  border: none; background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff; border-radius: 999px; padding: 0.6rem 1.7rem; font-weight: 700;
+  font-size: 0.92rem; cursor: pointer; box-shadow: 0 6px 18px rgba(37, 99, 235, 0.3);
+  transition: transform 0.15s ease; flex: none; font-family: inherit;
+}
+.c-submit:hover:not(:disabled) { transform: translateY(-1px); }
+.c-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+.c-list { display: flex; flex-direction: column; gap: 0.9rem; }
+.c-item { padding: 0.95rem 1.1rem; display: flex; gap: 0.8rem; animation: c-in 0.35s ease; }
+@keyframes c-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.c-item .c-avatar { width: 40px; height: 40px; }
+.c-body { flex: 1; min-width: 0; }
+.c-meta { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 0.3rem; }
+.c-nick-name { font-weight: 700; font-size: 0.92rem; }
+.c-time { color: var(--muted); font-size: 0.75rem; }
+.c-text-body { font-size: 0.93rem; line-height: 1.7; word-break: break-word; white-space: pre-wrap; }
+.c-more { text-align: center; margin-top: 1.1rem; }
+.c-more button {
+  border: 1px solid rgba(255, 255, 255, 0.7); background: rgba(255, 255, 255, 0.5);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  border-radius: 999px; padding: 0.5rem 1.6rem; font-size: 0.85rem; cursor: pointer;
+  color: var(--ink); font-family: inherit;
+}
+.c-empty { text-align: center; color: var(--muted); padding: 1.6rem 0; font-size: 0.9rem; }
+
 .dl-section { text-align: center; margin: 3.2rem 0 2.4rem; }
 .dl-btn {
   display: inline-block;
@@ -557,6 +615,23 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
   <p class="dl-note">82 个兑换码完整版 · 微信可直接打开 · 更新于 2026-08-28</p>
 </section>
 
+<section class="comments" id="comments">
+  <div class="c-title"><h2>评论区</h2><span class="c-count" id="cCount"></span></div>
+  <div class="glass c-composer">
+    <div class="c-row">
+      <img class="c-avatar" id="cAvatar" src="avatars/a1.jpg" alt="头像">
+      <input class="c-nick" id="cNick" maxlength="16" placeholder="昵称（默认为匿名者，可修改）">
+    </div>
+    <textarea class="c-text" id="cText" maxlength="500" placeholder="留下你的留言吧～ 无需注册，所有人可见"></textarea>
+    <div class="c-foot">
+      <span class="c-hint">无需注册 · 评论公开可见 · 请文明发言</span>
+      <button class="c-submit" id="cSubmit">发表评论</button>
+    </div>
+  </div>
+  <div class="c-list" id="cList"></div>
+  <div class="c-more" id="cMore" style="display:none"><button id="cMoreBtn">加载更多评论</button></div>
+</section>
+
 <footer>
   <div class="sources">
     <h2>资料来源</h2>
@@ -667,4 +742,116 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
 
 
 
+<script>
+(function () {
+  var TWIKOO_URL = ''; // Twikoo 后端地址，如 https://twikoo-xxx.vercel.app
+  var AVATARS = ['avatars/a1.jpg','avatars/a2.jpg','avatars/a3.jpg','avatars/a4.jpg','avatars/a5.jpg','avatars/a6.jpg','avatars/a7.jpg','avatars/a8.jpg'];
+  var $ = function (id) { return document.getElementById(id); };
+  var nickEl = $('cNick'), textEl = $('cText'), avatarEl = $('cAvatar'),
+      listEl = $('cList'), countEl = $('cCount'), submitBtn = $('cSubmit'),
+      moreWrap = $('cMore'), moreBtn = $('cMoreBtn');
+  var loaded = [], lastBefore = null, busy = false;
+
+  function hash(s) { var h = 0; for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) | 0; } return Math.abs(h); }
+  function avatarFor(nick) { return AVATARS[hash(nick || '匿名者') % AVATARS.length]; }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function relTime(ts) {
+    var d = Date.now() - ts;
+    if (d < 60e3) return '刚刚';
+    if (d < 3600e3) return Math.floor(d / 60e3) + ' 分钟前';
+    if (d < 86400e3) return Math.floor(d / 3600e3) + ' 小时前';
+    if (d < 30 * 86400e3) return Math.floor(d / 86400e3) + ' 天前';
+    var t = new Date(ts);
+    return t.getFullYear() + '-' + (t.getMonth() + 1) + '-' + t.getDate();
+  }
+  function plain(html) {
+    return String(html).replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+  }
+  function nick() { return (nickEl.value || '').trim() || '匿名者'; }
+
+  function render() {
+    if (!loaded.length) {
+      listEl.innerHTML = '<div class="c-empty">还没有人留言，快来抢沙发～</div>';
+      moreWrap.style.display = 'none';
+      return;
+    }
+    listEl.innerHTML = loaded.map(function (c) {
+      var n = c.nick || '匿名者';
+      var text = esc(c.commentText || plain(c.comment || ''));
+      return '<div class="glass c-item">' +
+        '<img class="c-avatar" src="' + avatarFor(n) + '" alt="">' +
+        '<div class="c-body"><div class="c-meta"><span class="c-nick-name">' + esc(n) + '</span>' +
+        '<span class="c-time" title="' + new Date(c.created).toLocaleString('zh-CN') + '">' + relTime(c.created) + '</span></div>' +
+        '<div class="c-text-body">' + text + '</div></div></div>';
+    }).join('');
+  }
+
+  function call(body) {
+    return fetch(TWIKOO_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(function (r) { return r.json(); });
+  }
+
+  function loadMore(reset) {
+    if (busy) return;
+    busy = true;
+    var body = { event: 'COMMENT_GET', url: location.pathname, sort: 'newest' };
+    if (!reset && lastBefore) body.before = lastBefore;
+    call(body).then(function (res) {
+      var data = res.data || [];
+      if (reset) loaded = data; else loaded = loaded.concat(data);
+      if (data.length) lastBefore = Math.min.apply(null, data.map(function (c) { return c.created; }));
+      countEl.textContent = '共 ' + (res.count != null ? res.count : loaded.length) + ' 条留言';
+      moreWrap.style.display = res.more ? '' : 'none';
+      render();
+    }).catch(function () {
+      listEl.innerHTML = '<div class="c-empty">评论加载失败，请稍后再试</div>';
+    }).then(function () { busy = false; });
+  }
+
+  function submit() {
+    var text = (textEl.value || '').trim();
+    if (!text) { textEl.focus(); return; }
+    submitBtn.disabled = true;
+    call({
+      event: 'COMMENT_SUBMIT',
+      url: location.pathname,
+      ua: navigator.userAgent,
+      nick: nick(),
+      mail: '',
+      link: '',
+      comment: esc(text),
+      href: location.href
+    }).then(function (res) {
+      if (res.code) throw new Error(res.message || '发送失败');
+      textEl.value = '';
+      lastBefore = null;
+      loadMore(true);
+      var t = $('toast'); if (t) { t.textContent = '评论成功'; t.classList.add('show'); setTimeout(function () { t.classList.remove('show'); }, 1800); }
+    }).catch(function (e) {
+      var t = $('toast'); if (t) { t.textContent = e.message || '评论失败，请稍后再试'; t.classList.add('show'); setTimeout(function () { t.classList.remove('show'); }, 2200); }
+    }).then(function () { submitBtn.disabled = false; });
+  }
+
+  function syncAvatar() { avatarEl.src = avatarFor(nick()); }
+
+  nickEl.value = localStorage.getItem('sgbh_nick') || '匿名者';
+  nickEl.addEventListener('input', function () {
+    localStorage.setItem('sgbh_nick', nickEl.value);
+    syncAvatar();
+  });
+  submitBtn.addEventListener('click', submit);
+  moreBtn.addEventListener('click', function () { loadMore(false); });
+  syncAvatar();
+
+  if (TWIKOO_URL) {
+    loadMore(true);
+  } else {
+    submitBtn.disabled = true;
+    listEl.innerHTML = '<div class="c-empty">评论区后端配置中，稍后开放留言～</div>';
+  }
+})();
+</script>
 </body></html>
