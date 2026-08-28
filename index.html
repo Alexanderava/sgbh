@@ -434,6 +434,25 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
   color: var(--ink); font-family: inherit;
 }
 .c-empty { text-align: center; color: var(--muted); padding: 1.6rem 0; font-size: 0.9rem; }
+.c-avatar-wrap { position: relative; flex: none; }
+#cAvatar { cursor: pointer; }
+.c-avatar-hint {
+  position: absolute; right: -3px; bottom: -3px; width: 17px; height: 17px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff;
+  font-size: 10px; line-height: 17px; text-align: center; pointer-events: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+.c-picker {
+  position: absolute; top: 52px; left: 0; z-index: 30; width: 236px; padding: 0.7rem;
+  display: none; grid-template-columns: repeat(5, 1fr); gap: 0.5rem;
+}
+.c-picker.open { display: grid; }
+.c-picker img {
+  width: 36px; height: 36px; border-radius: 50%; object-fit: cover; cursor: pointer;
+  border: 2px solid transparent; transition: transform 0.12s ease, border-color 0.12s ease;
+}
+.c-picker img:hover { transform: scale(1.12); }
+.c-picker img.sel { border-color: var(--accent); }
 
 .dl-section { text-align: center; margin: 3.2rem 0 2.4rem; }
 .dl-btn {
@@ -619,7 +638,11 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
   <div class="c-title"><h2>评论区</h2><span class="c-count" id="cCount"></span></div>
   <div class="glass c-composer">
     <div class="c-row">
-      <img class="c-avatar" id="cAvatar" src="avatars/a1.jpg" alt="头像">
+      <div class="c-avatar-wrap">
+        <img class="c-avatar" id="cAvatar" src="avatars/a1.jpg" alt="头像" title="点击更换头像">
+        <span class="c-avatar-hint">✎</span>
+        <div class="c-picker glass" id="cPicker"></div>
+      </div>
       <input class="c-nick" id="cNick" maxlength="16" placeholder="昵称（默认为匿名者，可修改）">
     </div>
     <textarea class="c-text" id="cText" maxlength="500" placeholder="留下你的留言吧～ 无需注册，所有人可见"></textarea>
@@ -746,9 +769,9 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
 (function () {
   var REPO = 'Alexanderava/sgbh';
   var ISSUE = 1; // 留言帖 Issue 编号
-  var TOKEN = ''; // 细粒度令牌（仅 sgbh 仓库 Issues 读写），配置后开放留言
+  var TOKEN = ''; // 待配置：评论写入令牌
   var API = 'https://api.github.com';
-  var AVATARS = ['avatars/a1.jpg','avatars/a2.jpg','avatars/a3.jpg','avatars/a4.jpg','avatars/a5.jpg','avatars/a6.jpg','avatars/a7.jpg','avatars/a8.jpg'];
+  var AVATARS = ['avatars/a1.jpg','avatars/a2.jpg','avatars/a3.jpg','avatars/a4.jpg','avatars/a5.jpg','avatars/a6.jpg','avatars/a7.jpg','avatars/a8.jpg','avatars/a9.jpg','avatars/a10.jpg'];
   var $ = function (id) { return document.getElementById(id); };
   var nickEl = $('cNick'), textEl = $('cText'), avatarEl = $('cAvatar'),
       listEl = $('cList'), countEl = $('cCount'), submitBtn = $('cSubmit'),
@@ -757,7 +780,8 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
   moreWrap.style.display = 'none';
 
   function hash(s) { var h = 0; for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) | 0; } return Math.abs(h); }
-  function avatarFor(nick) { return AVATARS[hash(nick || '匿名者') % AVATARS.length]; }
+  var myAvatar = parseInt(localStorage.getItem('sgbh_avatar'), 10);
+  if (isNaN(myAvatar) || myAvatar < 0 || myAvatar >= AVATARS.length) myAvatar = Math.floor(Math.random() * AVATARS.length);
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function relTime(ts) {
     var d = Date.now() - ts;
@@ -772,7 +796,7 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
   function parse(c) {
     try {
       var o = JSON.parse(c.body);
-      return { n: String(o.n || '匿名者'), t: String(o.t || ''), ts: new Date(c.created_at).getTime() };
+      return { n: String(o.n || '匿名者'), t: String(o.t || ''), a: (typeof o.a === 'number' && o.a >= 0 && o.a < AVATARS.length) ? o.a : null, ts: new Date(c.created_at).getTime() };
     } catch (e) {
       return { n: '匿名者', t: String(c.body || ''), ts: new Date(c.created_at).getTime() };
     }
@@ -785,7 +809,7 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
     }
     listEl.innerHTML = loaded.map(function (c) {
       return '<div class="glass c-item">' +
-        '<img class="c-avatar" src="' + avatarFor(c.n) + '" alt="">' +
+        '<img class="c-avatar" src="' + (c.a != null ? AVATARS[c.a] : AVATARS[hash(c.n) % AVATARS.length]) + '" alt="">' +
         '<div class="c-body"><div class="c-meta"><span class="c-nick-name">' + esc(c.n) + '</span>' +
         '<span class="c-time" title="' + new Date(c.ts).toLocaleString('zh-CN') + '">' + relTime(c.ts) + '</span></div>' +
         '<div class="c-text-body">' + esc(c.t) + '</div></div></div>';
@@ -827,7 +851,7 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
     fetch(API + '/repos/' + REPO + '/issues/' + ISSUE + '/comments', {
       method: 'POST',
       headers: { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body: JSON.stringify({ n: nick(), t: text }) })
+      body: JSON.stringify({ body: JSON.stringify({ n: nick(), t: text, a: myAvatar }) })
     }).then(function (r) {
       if (!r.ok) return r.json().then(function (j) { throw new Error(j.message || '发送失败'); });
       textEl.value = '';
@@ -838,12 +862,33 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
     }).then(function () { submitBtn.disabled = !TOKEN; });
   }
 
-  function syncAvatar() { avatarEl.src = avatarFor(nick()); }
+  function syncAvatar() { avatarEl.src = AVATARS[myAvatar]; }
+
+  var pickerEl = $('cPicker');
+  AVATARS.forEach(function (src, i) {
+    var im = document.createElement('img');
+    im.src = src; im.alt = '';
+    im.addEventListener('click', function (e) {
+      e.stopPropagation();
+      myAvatar = i;
+      localStorage.setItem('sgbh_avatar', String(i));
+      syncAvatar(); markSel(); closePicker();
+    });
+    pickerEl.appendChild(im);
+  });
+  function markSel() {
+    for (var i = 0; i < pickerEl.children.length; i++) pickerEl.children[i].className = i === myAvatar ? 'sel' : '';
+  }
+  function closePicker() { pickerEl.classList.remove('open'); }
+  avatarEl.addEventListener('click', function (e) {
+    e.stopPropagation();
+    if (pickerEl.classList.toggle('open')) markSel();
+  });
+  document.addEventListener('click', closePicker);
 
   nickEl.value = localStorage.getItem('sgbh_nick') || '匿名者';
   nickEl.addEventListener('input', function () {
     localStorage.setItem('sgbh_nick', nickEl.value);
-    syncAvatar();
   });
   submitBtn.addEventListener('click', submit);
   syncAvatar();
