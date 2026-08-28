@@ -50,7 +50,7 @@
       data: [
         { name: '长期有效码', value: 64 },
         { name: '限时/活动/节日码', value: 14 },
-        { name: '已过期码（存档）', value: 9 }
+        { name: '已过期码（存档）', value: 8 }
       ]
     }]
   });
