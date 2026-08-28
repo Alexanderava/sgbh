@@ -744,13 +744,17 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
 
 <script>
 (function () {
-  var TWIKOO_URL = ''; // Twikoo 后端地址，如 https://twikoo-xxx.vercel.app
+  var REPO = 'Alexanderava/sgbh';
+  var ISSUE = 1; // 留言帖 Issue 编号
+  var TOKEN = ''; // 细粒度令牌（仅 sgbh 仓库 Issues 读写），配置后开放留言
+  var API = 'https://api.github.com';
   var AVATARS = ['avatars/a1.jpg','avatars/a2.jpg','avatars/a3.jpg','avatars/a4.jpg','avatars/a5.jpg','avatars/a6.jpg','avatars/a7.jpg','avatars/a8.jpg'];
   var $ = function (id) { return document.getElementById(id); };
   var nickEl = $('cNick'), textEl = $('cText'), avatarEl = $('cAvatar'),
       listEl = $('cList'), countEl = $('cCount'), submitBtn = $('cSubmit'),
-      moreWrap = $('cMore'), moreBtn = $('cMoreBtn');
-  var loaded = [], lastBefore = null, busy = false;
+      moreWrap = $('cMore');
+  var loaded = [], busy = false;
+  moreWrap.style.display = 'none';
 
   function hash(s) { var h = 0; for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) | 0; } return Math.abs(h); }
   function avatarFor(nick) { return AVATARS[hash(nick || '匿名者') % AVATARS.length]; }
@@ -764,50 +768,55 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
     var t = new Date(ts);
     return t.getFullYear() + '-' + (t.getMonth() + 1) + '-' + t.getDate();
   }
-  function plain(html) {
-    return String(html).replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
-  }
   function nick() { return (nickEl.value || '').trim() || '匿名者'; }
+  function parse(c) {
+    try {
+      var o = JSON.parse(c.body);
+      return { n: String(o.n || '匿名者'), t: String(o.t || ''), ts: new Date(c.created_at).getTime() };
+    } catch (e) {
+      return { n: '匿名者', t: String(c.body || ''), ts: new Date(c.created_at).getTime() };
+    }
+  }
 
   function render() {
     if (!loaded.length) {
       listEl.innerHTML = '<div class="c-empty">还没有人留言，快来抢沙发～</div>';
-      moreWrap.style.display = 'none';
       return;
     }
     listEl.innerHTML = loaded.map(function (c) {
-      var n = c.nick || '匿名者';
-      var text = esc(c.commentText || plain(c.comment || ''));
       return '<div class="glass c-item">' +
-        '<img class="c-avatar" src="' + avatarFor(n) + '" alt="">' +
-        '<div class="c-body"><div class="c-meta"><span class="c-nick-name">' + esc(n) + '</span>' +
-        '<span class="c-time" title="' + new Date(c.created).toLocaleString('zh-CN') + '">' + relTime(c.created) + '</span></div>' +
-        '<div class="c-text-body">' + text + '</div></div></div>';
+        '<img class="c-avatar" src="' + avatarFor(c.n) + '" alt="">' +
+        '<div class="c-body"><div class="c-meta"><span class="c-nick-name">' + esc(c.n) + '</span>' +
+        '<span class="c-time" title="' + new Date(c.ts).toLocaleString('zh-CN') + '">' + relTime(c.ts) + '</span></div>' +
+        '<div class="c-text-body">' + esc(c.t) + '</div></div></div>';
     }).join('');
   }
 
-  function call(body) {
-    return fetch(TWIKOO_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    }).then(function (r) { return r.json(); });
+  function headers() {
+    var h = { 'Accept': 'application/vnd.github+json' };
+    if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
+    return h;
   }
 
-  function loadMore(reset) {
+  function loadAll() {
     if (busy) return;
     busy = true;
-    var body = { event: 'COMMENT_GET', url: location.pathname, sort: 'newest' };
-    if (!reset && lastBefore) body.before = lastBefore;
-    call(body).then(function (res) {
-      var data = res.data || [];
-      if (reset) loaded = data; else loaded = loaded.concat(data);
-      if (data.length) lastBefore = Math.min.apply(null, data.map(function (c) { return c.created; }));
-      countEl.textContent = '共 ' + (res.count != null ? res.count : loaded.length) + ' 条留言';
-      moreWrap.style.display = res.more ? '' : 'none';
+    var all = [];
+    function grab(page) {
+      return fetch(API + '/repos/' + REPO + '/issues/' + ISSUE + '/comments?per_page=100&page=' + page, { headers: headers() })
+        .then(function (r) { return r.json(); })
+        .then(function (arr) {
+          if (!Array.isArray(arr)) throw new Error((arr && arr.message) || '评论加载失败');
+          all = all.concat(arr);
+          if (arr.length === 100 && page < 5) return grab(page + 1);
+        });
+    }
+    grab(1).then(function () {
+      loaded = all.reverse().map(parse);
+      countEl.textContent = '共 ' + loaded.length + ' 条留言';
       render();
-    }).catch(function () {
-      listEl.innerHTML = '<div class="c-empty">评论加载失败，请稍后再试</div>';
+    }).catch(function (e) {
+      listEl.innerHTML = '<div class="c-empty">' + esc(e.message || '评论加载失败，请稍后再试') + '</div>';
     }).then(function () { busy = false; });
   }
 
@@ -815,24 +824,18 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
     var text = (textEl.value || '').trim();
     if (!text) { textEl.focus(); return; }
     submitBtn.disabled = true;
-    call({
-      event: 'COMMENT_SUBMIT',
-      url: location.pathname,
-      ua: navigator.userAgent,
-      nick: nick(),
-      mail: '',
-      link: '',
-      comment: esc(text),
-      href: location.href
-    }).then(function (res) {
-      if (res.code) throw new Error(res.message || '发送失败');
+    fetch(API + '/repos/' + REPO + '/issues/' + ISSUE + '/comments', {
+      method: 'POST',
+      headers: { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ body: JSON.stringify({ n: nick(), t: text }) })
+    }).then(function (r) {
+      if (!r.ok) return r.json().then(function (j) { throw new Error(j.message || '发送失败'); });
       textEl.value = '';
-      lastBefore = null;
-      loadMore(true);
+      loadAll();
       var t = $('toast'); if (t) { t.textContent = '评论成功'; t.classList.add('show'); setTimeout(function () { t.classList.remove('show'); }, 1800); }
     }).catch(function (e) {
       var t = $('toast'); if (t) { t.textContent = e.message || '评论失败，请稍后再试'; t.classList.add('show'); setTimeout(function () { t.classList.remove('show'); }, 2200); }
-    }).then(function () { submitBtn.disabled = false; });
+    }).then(function () { submitBtn.disabled = !TOKEN; });
   }
 
   function syncAvatar() { avatarEl.src = avatarFor(nick()); }
@@ -843,15 +846,13 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
     syncAvatar();
   });
   submitBtn.addEventListener('click', submit);
-  moreBtn.addEventListener('click', function () { loadMore(false); });
   syncAvatar();
+  loadAll();
 
-  if (TWIKOO_URL) {
-    loadMore(true);
-  } else {
+  if (!TOKEN) {
     submitBtn.disabled = true;
-    listEl.innerHTML = '<div class="c-empty">评论区后端配置中，稍后开放留言～</div>';
+    submitBtn.title = '留言功能即将开放';
   }
 })();
-</script>
+</script></script>
 </body></html>
