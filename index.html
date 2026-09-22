@@ -623,24 +623,16 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
 </section>
 
 <section class="comments" id="comments">
-  <div class="c-title"><h2>评论区</h2><span class="c-count" id="cCount"></span></div>
-  <div class="glass c-composer">
-    <div class="c-row">
-      <div class="c-avatar-wrap">
-        <img class="c-avatar" id="cAvatar" src="avatars/a1.jpg" alt="头像" title="点击更换头像">
-        <span class="c-avatar-hint">✎</span>
-        <div class="c-picker glass" id="cPicker"></div>
-      </div>
-      <input class="c-nick" id="cNick" maxlength="16" placeholder="昵称（默认为匿名者，可修改）">
-    </div>
-    <textarea class="c-text" id="cText" maxlength="500" placeholder="留下你的留言吧～ 无需注册，所有人可见"></textarea>
-    <div class="c-foot">
-      <span class="c-hint">无需注册 · 评论公开可见 · 请文明发言</span>
-      <button class="c-submit" id="cSubmit">发表评论</button>
-    </div>
-  </div>
-  <div class="c-list" id="cList"></div>
-  <div class="c-more" id="cMore" style="display:none"><button id="cMoreBtn">加载更多评论</button></div>
+  <h2>评论区</h2>
+  <p class="note">使用 GitHub 账号登录后即可留言，评论数据存储在本仓库 Issue 中。</p>
+  <script src="https://utteranc.es/client.js"
+    repo="Alexanderava/sgbh"
+    issue-term="title"
+    label="comments"
+    theme="preferred-color-scheme"
+    crossorigin="anonymous"
+    async>
+  </script>
 </section>
 
 <footer>
@@ -707,7 +699,6 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
 
 <div id="toast">已复制到剪贴板</div>
 
-<script src="assets/charts.js"></script>
 <script>
 (function() {
   var toast = document.getElementById('toast');
@@ -753,142 +744,4 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
   });
 })();
 </script>
-
-
-
-<script>
-(function () {
-  var REPO = 'Alexanderava/sgbh';
-  var ISSUE = 1; // 留言帖 Issue 编号
-  var TOKEN = ''; // 待配置：评论写入令牌
-  var API = 'https://api.github.com';
-  var AVATARS = ['avatars/a1.jpg','avatars/a2.jpg','avatars/a3.jpg','avatars/a4.jpg','avatars/a5.jpg','avatars/a6.jpg','avatars/a7.jpg','avatars/a8.jpg','avatars/a9.jpg','avatars/a10.jpg'];
-  var $ = function (id) { return document.getElementById(id); };
-  var nickEl = $('cNick'), textEl = $('cText'), avatarEl = $('cAvatar'),
-      listEl = $('cList'), countEl = $('cCount'), submitBtn = $('cSubmit'),
-      moreWrap = $('cMore');
-  var loaded = [], busy = false;
-  moreWrap.style.display = 'none';
-
-  function hash(s) { var h = 0; for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) | 0; } return Math.abs(h); }
-  var myAvatar = parseInt(localStorage.getItem('sgbh_avatar'), 10);
-  if (isNaN(myAvatar) || myAvatar < 0 || myAvatar >= AVATARS.length) myAvatar = Math.floor(Math.random() * AVATARS.length);
-  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  function relTime(ts) {
-    var d = Date.now() - ts;
-    if (d < 60e3) return '刚刚';
-    if (d < 3600e3) return Math.floor(d / 60e3) + ' 分钟前';
-    if (d < 86400e3) return Math.floor(d / 3600e3) + ' 小时前';
-    if (d < 30 * 86400e3) return Math.floor(d / 86400e3) + ' 天前';
-    var t = new Date(ts);
-    return t.getFullYear() + '-' + (t.getMonth() + 1) + '-' + t.getDate();
-  }
-  function nick() { return (nickEl.value || '').trim() || '匿名者'; }
-  function parse(c) {
-    try {
-      var o = JSON.parse(c.body);
-      return { n: String(o.n || '匿名者'), t: String(o.t || ''), a: (typeof o.a === 'number' && o.a >= 0 && o.a < AVATARS.length) ? o.a : null, ts: new Date(c.created_at).getTime() };
-    } catch (e) {
-      return { n: '匿名者', t: String(c.body || ''), ts: new Date(c.created_at).getTime() };
-    }
-  }
-
-  function render() {
-    if (!loaded.length) {
-      listEl.innerHTML = '<div class="c-empty">还没有人留言，快来抢沙发～</div>';
-      return;
-    }
-    listEl.innerHTML = loaded.map(function (c) {
-      return '<div class="glass c-item">' +
-        '<img class="c-avatar" src="' + (c.a != null ? AVATARS[c.a] : AVATARS[hash(c.n) % AVATARS.length]) + '" alt="">' +
-        '<div class="c-body"><div class="c-meta"><span class="c-nick-name">' + esc(c.n) + '</span>' +
-        '<span class="c-time" title="' + new Date(c.ts).toLocaleString('zh-CN') + '">' + relTime(c.ts) + '</span></div>' +
-        '<div class="c-text-body">' + esc(c.t) + '</div></div></div>';
-    }).join('');
-  }
-
-  function headers() {
-    var h = { 'Accept': 'application/vnd.github+json' };
-    if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
-    return h;
-  }
-
-  function loadAll() {
-    if (busy) return;
-    busy = true;
-    var all = [];
-    function grab(page) {
-      return fetch(API + '/repos/' + REPO + '/issues/' + ISSUE + '/comments?per_page=100&page=' + page, { headers: headers() })
-        .then(function (r) { return r.json(); })
-        .then(function (arr) {
-          if (!Array.isArray(arr)) throw new Error((arr && arr.message) || '评论加载失败');
-          all = all.concat(arr);
-          if (arr.length === 100 && page < 5) return grab(page + 1);
-        });
-    }
-    grab(1).then(function () {
-      loaded = all.reverse().map(parse);
-      countEl.textContent = '共 ' + loaded.length + ' 条留言';
-      render();
-    }).catch(function (e) {
-      listEl.innerHTML = '<div class="c-empty">' + esc(e.message || '评论加载失败，请稍后再试') + '</div>';
-    }).then(function () { busy = false; });
-  }
-
-  function submit() {
-    var text = (textEl.value || '').trim();
-    if (!text) { textEl.focus(); return; }
-    submitBtn.disabled = true;
-    fetch(API + '/repos/' + REPO + '/issues/' + ISSUE + '/comments', {
-      method: 'POST',
-      headers: { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body: JSON.stringify({ n: nick(), t: text, a: myAvatar }) })
-    }).then(function (r) {
-      if (!r.ok) return r.json().then(function (j) { throw new Error(j.message || '发送失败'); });
-      textEl.value = '';
-      loadAll();
-      var t = $('toast'); if (t) { t.textContent = '评论成功'; t.classList.add('show'); setTimeout(function () { t.classList.remove('show'); }, 1800); }
-    }).catch(function (e) {
-      var t = $('toast'); if (t) { t.textContent = e.message || '评论失败，请稍后再试'; t.classList.add('show'); setTimeout(function () { t.classList.remove('show'); }, 2200); }
-    }).then(function () { submitBtn.disabled = !TOKEN; });
-  }
-
-  function syncAvatar() { avatarEl.src = AVATARS[myAvatar]; }
-
-  var pickerEl = $('cPicker');
-  AVATARS.forEach(function (src, i) {
-    var im = document.createElement('img');
-    im.src = src; im.alt = '';
-    im.addEventListener('click', function (e) {
-      e.stopPropagation();
-      myAvatar = i;
-      localStorage.setItem('sgbh_avatar', String(i));
-      syncAvatar(); markSel(); closePicker();
-    });
-    pickerEl.appendChild(im);
-  });
-  function markSel() {
-    for (var i = 0; i < pickerEl.children.length; i++) pickerEl.children[i].className = i === myAvatar ? 'sel' : '';
-  }
-  function closePicker() { pickerEl.classList.remove('open'); }
-  avatarEl.addEventListener('click', function (e) {
-    e.stopPropagation();
-    if (pickerEl.classList.toggle('open')) markSel();
-  });
-  document.addEventListener('click', closePicker);
-
-  nickEl.value = localStorage.getItem('sgbh_nick') || '匿名者';
-  nickEl.addEventListener('input', function () {
-    localStorage.setItem('sgbh_nick', nickEl.value);
-  });
-  submitBtn.addEventListener('click', submit);
-  syncAvatar();
-  loadAll();
-
-  if (!TOKEN) {
-    submitBtn.disabled = true;
-    submitBtn.title = '留言功能即将开放';
-  }
-})();
-</script></script>
 </body></html>
