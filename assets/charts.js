@@ -49,8 +49,8 @@
       labelLine: { lineStyle: { color: muted } },
       data: [
         { name: '长期有效码', value: 68 },
-        { name: '限时/活动/节日码', value: 13 },
-        { name: '已过期码（存档）', value: 1 }
+        { name: '限时/活动/节日码', value: 12 },
+        { name: '已过期码（存档）', value: 3 }
       ]
     }]
   });
