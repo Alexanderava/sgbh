@@ -14,7 +14,7 @@
   var chart = echarts.init(el, null, { renderer: 'svg' });
   chart.setOption({
     animation: false,
-    color: [accent, ok, accent2, warn, muted, dead],
+    color: [ok, warn, accent, dead, muted, accent2],
     tooltip: {
       trigger: 'item',
       appendToBody: true,
@@ -48,8 +48,10 @@
       },
       labelLine: { lineStyle: { color: muted } },
       data: [
+        { name: '长期有效', value: 33 },
+        { name: '限时有效（重阳）', value: 1 },
         { name: '官微定期码（已过期）', value: 82 },
-        { name: '其他渠道/批次码（已失效）', value: 44 },
+        { name: '批次码（已失效）', value: 44 },
         { name: '未标注有效期', value: 1 }
       ]
     }]
