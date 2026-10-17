@@ -48,9 +48,9 @@
       },
       labelLine: { lineStyle: { color: muted } },
       data: [
-        { name: '长期有效码', value: 68 },
-        { name: '限时/活动/节日码', value: 12 },
-        { name: '已过期码（存档）', value: 3 }
+        { name: '官微定期码（已过期）', value: 82 },
+        { name: '其他渠道/批次码（已失效）', value: 44 },
+        { name: '未标注有效期', value: 1 }
       ]
     }]
   });
