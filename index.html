@@ -259,15 +259,6 @@ td.date.unknown { color: var(--muted); }
 .badge.dead { background: rgba(154, 167, 179, 0.16); color: var(--dead); }
 .badge.info { background: rgba(31, 122, 192, 0.12);  color: var(--accent); }
 
-/* ===== Chart ===== */
-.chart-figure { margin: 1.5rem 0; }
-.chart-figure figcaption {
-  font-size: 0.92rem;
-  font-weight: 700;
-  margin-bottom: 0.75rem;
-  text-align: center;
-}
-
 /* ===== Toast ===== */
 #toast {
   position: fixed;
@@ -506,18 +497,9 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
   </div>
 </section>
 
-<!-- ============ 总览图表 ============ -->
-<section id="overview">
-  <h2>二、状态总览</h2>
-  <figure class="chart-figure card">
-    <figcaption>图 1：161 个兑换码按有效期状态分布（截至 2026-10-18）</figcaption>
-    <div id="chart-dist" style="width:100%;min-height:380px"></div>
-  </figure>
-</section>
-
 <!-- ============ 全部兑换码 ============ -->
 <section id="all-codes">
-  <h2>三、全部兑换码（当前可用 34 条 + 历史存档 127 条）</h2>
+  <h2>二、全部兑换码（当前可用 34 条 + 历史存档 127 条）</h2>
   <p class="note">第 1–34 条为当前可用兑换码（长期有效 33 条 + 官微重阳节限时码 1 条，按官方公布顺序排列），第 35 条起为历史存档（已过期 / 已失效）。发布日期不详的码统一排在所属分组末尾。点击任意兑换码即可复制。</p>
   <div class="table-wrap">
     <table>
@@ -782,8 +764,6 @@ footer .disclaimer { margin-top: 1.2rem; font-size: 0.8rem; color: var(--muted);
 
 <div id="toast">已复制到剪贴板</div>
 
-<script src="./_shared/js/echarts.min.js"></script>
-<script src="assets/charts.js"></script>
 <script>
 (function() {
   var toast = document.getElementById('toast');
